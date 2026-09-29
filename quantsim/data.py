@@ -68,7 +68,7 @@ def fetch_stooq(symbol: str, timeout: float = 30.0) -> PriceSeries:
     stooq_symbol = symbol.lower() if "." in symbol else f"{symbol.lower()}.us"
     req = urllib.request.Request(
         STOOQ_URL.format(symbol=stooq_symbol),
-        headers={"User-Agent": "quantsim (github.com/hilothefunnydog123-coder/quantsim)"},
+        headers={"User-Agent": "quantsim (github.com/NeilGilani/quantsim)"},
     )
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         text = resp.read().decode("utf-8", errors="replace")

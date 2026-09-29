@@ -16,7 +16,7 @@
                      └────────────────────────────┘
 ```
 
-Built on NumPy (the only dependency), 36 tests, MIT licensed.
+Built on NumPy (the only dependency), 44 tests, MIT licensed.
 
 ![SMA crossover vs buy & hold — the trend filter sidesteps a 58% crash](docs/demo-backtest.png)
 
@@ -25,7 +25,7 @@ Built on NumPy (the only dependency), 36 tests, MIT licensed.
 ## 🚀 Quickstart
 
 ```bash
-pip install "quantsim[all] @ git+https://github.com/hilothefunnydog123-coder/quantsim.git"
+pip install "quantsim[all] @ git+https://github.com/NeilGilani/quantsim.git"
 
 # 1) backtest a 20/100 SMA crossover on 10 years of real SPY data
 quantsim backtest --symbol SPY --strategy sma --plot spy.png
@@ -70,19 +70,19 @@ broker = PaperBroker("state/portfolio.json")
 run_cycle(broker, series.closes, "QQQ", Breakout())
 ```
 
-For stateful strategies, `run_cycle` replays history exactly like the backtester, so the live weight is **bit-for-bit the backtest's final weight** — there's a test asserting it.
+For stateful strategies, `run_cycle` replays the full history through the same `Strategy` before deciding, so a stateful strategy arrives at today in the state the backtester would have left it in. (The live cycle sees one more bar than the backtest's last decision and is long-only, so the two weights can legitimately differ on the final bar.)
 
 Built-ins: `buyhold`, `sma`, `momentum`, `meanrev` — all deliberately readable; fork them.
 
 ## 📊 The matching engine
 
-`quantsim.orderbook.OrderBook` is a real price-time priority limit order book — the data structure inside every exchange. Limit and market orders, FIFO queues per price level, partial fills at maker price, cancels, depth snapshots, deterministic sequence numbers. **~165k orders/sec** in pure Python (`python scripts/bench_orderbook.py`), with randomized invariant tests proving the book never crosses itself and every share is filled, resting, or explicitly discarded.
+`quantsim.orderbook.OrderBook` is a real price-time priority limit order book — the data structure inside every exchange. Limit and market orders, FIFO queues per price level, partial fills at maker price, cancels, depth snapshots, deterministic sequence numbers. **~165k orders/sec** in pure Python (`python scripts/bench_orderbook.py`), with randomized invariant tests checking that the book never crosses itself and that every share of a limit order is either filled or resting.
 
 It powers `BookExecution`: instead of guessing "1 bp per trade", backtests can *execute* each rebalance as a market order against synthetic book liquidity. Small orders pay ~half the spread; big orders eat through levels and pay real impact. Thin out `--level-shares` and watch a churny strategy's edge disappear — that's the lesson most backtests hide.
 
 ## 🤖 The live bot (free, scheduled, auditable)
 
-`quantsim live run` does one idempotent cycle: fetch closes → compute weight → rebalance to target. Brokers: a local simulator (default) and **Alpaca's paper API** via plain `urllib` (`--live`, keys in `APCA_API_KEY_ID`/`APCA_API_SECRET_KEY`). The included [GitHub Actions workflow](.github/workflows/trade.yml) runs it every US market morning and **commits the state + HTML P&L report into the repo** — the track record is the git history, not a screenshot. Enable GitHub Pages on `/docs` and your equity curve is a self-updating public URL.
+`quantsim live run` does one idempotent cycle: fetch closes → compute weight → rebalance to target. Brokers: a local simulator (default) and **Alpaca's paper API** via plain `urllib` (`--live`, keys in `APCA_API_KEY_ID`/`APCA_API_SECRET_KEY`). The included [GitHub Actions workflow](.github/workflows/trade.yml) is set up to run it every US market morning and **commit the state + HTML P&L report into the repo**, so the track record would be the git history, not a screenshot. No cycle has been committed yet (there is no `state/` directory in this repo), so there is no track record to point to. Enable GitHub Pages on `/docs` once it runs and the equity curve becomes a self-updating public URL.
 
 > Paper money only. The Alpaca integration points at `paper-api.alpaca.markets`; this is a research and learning tool, not investment advice.
 
@@ -99,7 +99,7 @@ It powers `BookExecution`: instead of guessing "1 bp per trade", backtests can *
 pip install -e ".[dev]" && pytest
 ```
 
-36 tests across the stack: backtest honesty, order book matching invariants (randomized), execution-model monotonicity (bigger orders and thinner books cost more), live-cycle idempotency and cash conservation, and backtest↔live weight equivalence.
+44 tests across the stack: backtest honesty, order book matching invariants (randomized), execution-model monotonicity (bigger orders and thinner books cost more), live-cycle idempotency and cash conservation, and backtest↔live weight equivalence.
 
 ## 📄 License
 
